@@ -108,7 +108,7 @@ const handler = async (msg) => {
   }
 
   if (!yandex.isPermitted(user)) {
-    if (!msg.text.match(/^\d+$/)) {
+    if (!msg.text?.match(/^\d+$/)) {
       return await bot.sendMessage(user.id, `Подключите Яндекс Диск командой /auth, либо пришлите код подтверждения`);
     }
 
