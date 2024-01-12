@@ -60,10 +60,19 @@ const transferFile = async (user, info, filePrefix) => {
 
       const { message_id: msgId } = await bot.sendMessage(user.id, `Загружаю файл ${targetName}`);
 
-      await yandex.transferFile(user, url, targetName);
-      await bot.editMessageText(`Файл ${targetName} загружен`, { chat_id: user.id, message_id: msgId });
-    })
-    .catch((err) => console.error(err, { userId: user.id }, info));
+      await yandex.transferFile(user, url, targetName)
+        .then(() => bot.editMessageText(`Файл ${targetName} загружен`, {
+          chat_id: user.id,
+          message_id: msgId,
+        }))
+        .catch((err) => {
+          console.error(err, { userId: user.id }, info);
+          return bot.editMessageText(`Возникла ошибка! Файл ${targetName} не был загружен`, {
+            chat_id: user.id,
+            message_id: msgId,
+          });
+        });
+    });
 };
 
 const uploadFilesFromMessage = async (user, msg) => {
