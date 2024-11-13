@@ -1,4 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
+import 'dotenv/config';
 
 import User from './lib/user.js';
 import YandexApi from './lib/yandex.js';
