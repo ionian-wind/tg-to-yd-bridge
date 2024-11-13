@@ -44,8 +44,7 @@ const usersList = async (user) => {
   if (whitelist.includes(user.id.toString())) {
     await bot.sendMessage(
       user.id,
-      `Список пользователей:
-      ${User.all().join('\n')}`
+      ['Список пользователей:', ...User.all()].join('\n')
     );
   }
 };
