@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import 'dotenv/config';
+import mime from 'mime-types';
 
 import User from './lib/user.js';
 import YandexApi from './lib/yandex.js';
@@ -55,21 +56,27 @@ const commands = new Map([
 ]);
 
 
-const transferFile = async (user, info, filePrefix) => {
+const transferFile = async (user, msg, info, filePrefix) => {
   if (info.fileSize > 20971520) { // TODO: switch to local bot api server
-    return await bot.sendMessage(user.id, `Файл ${info.fileName} больше 20 мегабайт, бот не может получать такие файлы`);
+    return await bot.sendMessage(user.id, `Файл ${info.fileName} больше 20 мегабайт, бот не может получать такие файлы`, {
+      reply_to_message_id: msg.message_id,
+    });
   }
 
   await bot.getFile(info.fileId)
-    .then(async ({ file_path: filePath }) => {
-      const [,fileNameReal] = filePath.split('/');
+    .then(async ({ file_path: filePath, ...fileData }) => {
+      const [,fileName] = filePath.split('/');
+      const fileNameReal = fileName ?? `${fileData.file_unique_id}.${mime.extension(info.fileMime)}`;
+
       const url = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${filePath}`;
 
       const targetName = filePrefix
         ? `${filePrefix}_${fileNameReal}`
-        : info.fileName;
+        : info.fileName ?? fileNameReal;
 
-      const { message_id: msgId } = await bot.sendMessage(user.id, `Загружаю файл ${targetName}`);
+      const { message_id: msgId } = await bot.sendMessage(user.id, `Загружаю файл ${targetName}`, {
+        reply_to_message_id: msg.message_id,
+      });
 
       await yandex.transferFile(user, url, targetName)
         .then(() => bot.editMessageText(`Файл ${targetName} загружен`, {
@@ -94,7 +101,7 @@ const uploadFilesFromMessage = async (user, msg) => {
       file_size: fileSize,
     }] = msg.photo.toSorted((photoA, photoB) => photoB.file_size - photoA.file_size);
 
-    await transferFile(user, {
+    await transferFile(user, msg, {
       fileName,
       fileId,
       fileSize,
@@ -103,7 +110,8 @@ const uploadFilesFromMessage = async (user, msg) => {
 
   for (const file of ['document', 'video', 'audio']) {
     if (msg[file]) {
-      await transferFile(user, {
+      await transferFile(user, msg, {
+        fileMime: msg[file].mime_type,
         fileName: msg[file].file_name,
         fileId: msg[file].file_id,
         fileSize: msg[file].file_size,

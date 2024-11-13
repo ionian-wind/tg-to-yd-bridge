@@ -20,6 +20,7 @@
     "axios": "1.6.5",
     "dotenv": "16.4.5",
     "lmdb": "2.9.2",
+    "mime-types": "2.1.35",
     "node-telegram-bot-api": "0.64.0",
     "uuid": "9.0.1"
   }
