@@ -40,8 +40,19 @@ const authRequest = async (user) => await bot.sendMessage(
   },
 )
 
+const usersList = async (user) => {
+  if (whitelist.includes(user.id.toString())) {
+    await bot.sendMessage(
+      user.id,
+      `Список пользователей:
+      ${User.all().join('\n')}`
+    );
+  }
+};
+
 const commands = new Map([
-  ['/auth', authRequest]
+  ['/auth', authRequest],
+  ['/ls', usersList]
 ]);
 
 
@@ -131,9 +142,14 @@ const handler = async (msg) => {
 };
 
 bot.on('message', (msg) => {
-  if (whitelist.includes(msg.chat?.id?.toString())) {
+  if (process.env.REG_ALLOWED === 'true' || whitelist.includes(msg.chat?.id?.toString())) {
     handler(msg)
       .catch(console.error);
+  } else if (msg.chat) {
+    bot.sendMessage(
+      msg.chat.id,
+      'access denied'
+    ).catch(console.error);
   }
 });
 
